@@ -67,13 +67,6 @@ bool if_as(char x){
         return false;
 }
 
-string convertToString(double d) {  
- ostringstream os;  
- if (os << d)  
-  return os.str();  
- return "invalid conversion";  
-}
-
 string& trim(string &str, string::size_type pos = 0)
 {
     static const string delim = " \t"; //删除空格或者tab字符
@@ -85,12 +78,13 @@ string& trim(string &str, string::size_type pos = 0)
 
 
 ParaVariable StringToPara(string checkstr, string funcName){
-	ParaVariable ptemp;
-	return ptemp;
+    ParaVariable ptemp;
+    return ptemp;
 }
 
 void ProgramCFG::assertSpec(CFG *cfg, int line){
     for(unsigned int i=0;i<cfg->stateList.size();i++){
+        if(cfg->stateList[i].error!=Noerr) continue;
         for(vector<int>::iterator it=cfg->stateList[i].locList.begin();it<cfg->stateList[i].locList.end();it++){
             if(*it==lineNo){
                 target.push_back(cfg->stateList[i].ID);
@@ -117,10 +111,6 @@ ProgramCFG::ProgramCFG(Module &m):M(m){
 
     //Create the cfg Structure
     CFG* cfg = new CFG();
-    cfg->counter_state = 0;
-    cfg->counter_variable = 0;
-    cfg->counter_s_state = 0;
-    cfg->counter_state = 0;
     buildProgramCFG(m, cfg);
     cfg->initial();
     if(outMode==1)
@@ -128,48 +118,40 @@ ProgramCFG::ProgramCFG(Module &m):M(m){
 
     finish=clock();
     double buildTime = 1000*(double)(finish-start)/CLOCKS_PER_SEC;
-    errs() << "#BUILDCFG Time: \t" << convertToString(buildTime) << "ms\n";
+    errs() << "#BUILDCFG Time: \t" << ConvertToString(buildTime) << "ms\n";
 
     if(outMode==1)
-	dbg->print();
-	
+    dbg->print();
+    
     if(dbg->loc>200){
-	errs()<<"Loc larger than 200!\n";
-	exit(-1);
+    errs()<<"Loc larger than 200!\n";
+    exit(-1);
     }
     int inputbound=bound;
     double dreal_time=0;
 
     if(check=="")
     {
-        assertSpec(cfg, lineNo);
-        clock_t start,finish;
         start=clock();
-        BoundedVerification verify(cfg,inputbound,target,prec,dbg);   
-        verify.setOutMode(output);
+        BoundedVerification verify(cfg,inputbound,target,prec,dbg,output);   
         verify.check(dreal_time,check);
-        finish=clock();
     }
     else {
-        clock_t start,finish;
-        start=clock();
-        BoundedVerification verify(cfg,inputbound,target,prec,dbg);
-        verify.setOutMode(output);
+        BoundedVerification verify(cfg,inputbound,target,prec,dbg,output);
         verify.check(dreal_time,check);
-        finish=clock();
     
     }
     errs() << "bound:\t" << bound <<"\tprecision:\t" << prec <<"\tfunctionName:\t" << funcname << "\tcheck:\t" << check << "\n";
-//    errs() << "Time: \t" << convertToString(1000*(double)(finish-start)/CLOCKS_PER_SEC) << "ms \n";
-	errs() << "#Dreal Time: \t" << convertToString(dreal_time/1000) << "s\n";
-	double mem_used_peak = memUsedPeak();
-	double cpu_time = cpuTime();
-	char mem_str[64];
-	if (mem_used_peak != 0) 
-		sprintf(mem_str, "#Memory used: %.2f MB\n", mem_used_peak);
-	char time_str[64];
-	sprintf(time_str, "#CPU Time: %g s\n", cpu_time);
-	errs()<<time_str<<mem_str;
+//    errs() << "Time: \t" << ConvertToString(1000*(double)(finish-start)/CLOCKS_PER_SEC) << "ms \n";
+    errs() << "#Dreal Time: \t" << ConvertToString(dreal_time/1000) << "s\n";
+    double mem_used_peak = memUsedPeak();
+    double cpu_time = cpuTime();
+    char mem_str[64];
+    if (mem_used_peak != 0) 
+        sprintf(mem_str, "#Memory used: %.2f MB\n", mem_used_peak);
+    char time_str[64];
+    sprintf(time_str, "#CPU Time: %g s\n", cpu_time);
+    errs()<<time_str<<mem_str;
 }
 
 enum color{WHITE,BLACK,GRAY};
@@ -207,22 +189,22 @@ void ProgramCFG::findAllRetBlocks(Module &m){
 }
 
 void  ProgramCFG::setFuncVariable(const Function *F,string func, CFG* cfg, bool initial){
-	for (Function::const_arg_iterator it = F->arg_begin(), E = F->arg_end();it != E; ++it) {
-		Type *Ty = it->getType();
-		if(initial){
-			string varNum = it->getName();
-			string varName = func+"_"+varNum;
-			
-			if(Ty->isPointerTy()){
-				Type *ETy = Ty->getPointerElementType();
-				int ID = cfg->counter_variable++;
-				Variable var(varName, ID, PTR);
-				cfg->variableList.push_back(var);
-				
-				InstParser::setVariable(cfg, NULL, ETy, varName, true);
-				
-			}
-			else{
+    for (Function::const_arg_iterator it = F->arg_begin(), E = F->arg_end();it != E; ++it) {
+        Type *Ty = it->getType();
+        if(initial){
+            string varNum = it->getName();
+            string varName = func+"_"+varNum;
+            
+            if(Ty->isPointerTy()){
+                Type *ETy = Ty->getPointerElementType();
+                int ID = cfg->counter_variable++;
+                Variable var(varName, ID, PTR);
+                cfg->variableList.push_back(var);
+                
+                InstParser::setVariable(cfg, NULL, ETy, varName, true);
+                
+            }
+            else{
                 VarType type;
                 if(Ty->isIntegerTy())
                     type = INT;
@@ -230,52 +212,52 @@ void  ProgramCFG::setFuncVariable(const Function *F,string func, CFG* cfg, bool 
                     type = FP;
                 else
                     errs()<<"0:programCFG.type error\n";
-				int ID = cfg->counter_variable++;
-				Variable var(varName, ID, type);
-				cfg->variableList.push_back(var);
-				cfg->mainInput.push_back(ID);
-			}
-		}
-		else{
-			int ID = cfg->counter_variable++;
-			string varNum = it->getName();
-			string varName = func+"_"+varNum;
-			
+                int ID = cfg->counter_variable++;
+                Variable var(varName, ID, type);
+                cfg->variableList.push_back(var);
+                cfg->mainInput.push_back(ID);
+            }
+        }
+        else{
+            int ID = cfg->counter_variable++;
+            string varNum = it->getName();
+            string varName = func+"_"+varNum;
+            
             VarType type;
-			if(Ty->isPointerTy())
-				type = PTR;
-			else if(Ty->isIntegerTy())
+            if(Ty->isPointerTy())
+                type = PTR;
+            else if(Ty->isIntegerTy())
                 type = INT;
             else if(Ty->isFloatingPointTy())
                 type = FP;
             else
                 errs()<<"1:programCFG.type error\n";
 
-			if(!cfg->hasVariable(varName)){
-				Variable var(varName, ID, type);
-				cfg->variableList.push_back(var);
-			}
-			else
-				errs()<<"1:setFuncVariable error 10086!!\t"<<varName<<"\n";
-		}
-	}
+            if(!cfg->hasVariable(varName)){
+                Variable var(varName, ID, type);
+                cfg->variableList.push_back(var);
+            }
+            else
+                errs()<<"1:setFuncVariable error 10086!!\t"<<varName<<"\n";
+        }
+    }
 }
 
 //build program cfg in the main source file !
 void  ProgramCFG::buildProgramCFG(Module &m, CFG* cfg){
-		if(funcname == "main"){
-			cfg->startFunc = "main";
-            		dbg = new DebugInfo("main");
-			readFunc("main", cfg, 0);
-		}
-		else{
-			errs() <<  "Warning: There is no main function in the Module!\n";
-    			const Function *F = m.getFunction(funcname);
-			if(!F)
-				errs() <<  "Error: Can't find function "<<funcname<<" in the Module!\n";
-			setFuncVariable(F, funcname, cfg, true);
-			cfg->startFunc = funcname;
-           		dbg = new DebugInfo(funcname);
+        if(funcname == "main"){
+            cfg->startFunc = "main";
+                    dbg = new DebugInfo("main");
+            readFunc("main", cfg, 0);
+        }
+        else{
+            errs() <<  "Warning: There is no main function in the Module!\n";
+                const Function *F = m.getFunction(funcname);
+            if(!F)
+                errs() <<  "Error: Can't find function "<<funcname<<" in the Module!\n";
+            setFuncVariable(F, funcname, cfg, true);
+            cfg->startFunc = funcname;
+                   dbg = new DebugInfo(funcname);
 
             map<string ,int >::iterator it=cfg->funcTime.find(funcname);
             if(it==cfg->funcTime.end())
@@ -283,16 +265,16 @@ void  ProgramCFG::buildProgramCFG(Module &m, CFG* cfg){
              else
                 errs()<<"ProgramCFG::buildProgramCFG error "<<funcname<<"\n";
 
-			readFunc(funcname, cfg, 0);
-		}	
+            readFunc(funcname, cfg, 0);
+        }    
 }
 
 void ProgramCFG::readFunc(string funcName, CFG *cfg, int time){
-	Function *F = M.getFunction(funcName);  
+    Function *F = M.getFunction(funcName);  
     if(F == NULL){
-    	errs() <<  "error readFunc 10086!\t"<<funcName<<"\n";
-		exit(-1) ;
-	}
+        errs() <<  "error readFunc 10086!\t"<<funcName<<"\n";
+        exit(-1) ;
+    }
 
     if(time==0)
         dbg->getFuncInfo(F);
@@ -303,9 +285,9 @@ void ProgramCFG::readFunc(string funcName, CFG *cfg, int time){
 }
 
 void ProgramCFG::readBasicblock(BasicBlock *b, CFG *cfg, int time){
-	string callFunc;
+    string callFunc;
 
-	if(b){
+    if(b){
 
         const Function* F = b->getParent()?b->getParent():nullptr;
 
@@ -318,47 +300,48 @@ void ProgramCFG::readBasicblock(BasicBlock *b, CFG *cfg, int time){
             return;
         }
 
-	    string func = F->getName();
-	    if(time>0)
-		func = func+convertToString(time);
+        string func = F->getName();
+        if(time>0)
+        func = func+ConvertToString(time);
             //Generate a new state
-        int id = cfg->counter_state++;
-        string  str = convertToString(cfg->counter_s_state++);
+        unsigned id = cfg->counter_state++;
+        string  str = ConvertToString(cfg->counter_s_state);
+        cfg->counter_s_state++;
         string name = "s"+str;
         State* s = new State(false, id, name, func);
-		while(!cfg->initialCons.empty()){
-			Constraint cTemp = cfg->initialCons.front();
-			cfg->initialCons.pop_front();
-			s->consList.push_back(cTemp);
-		}
+        while(!cfg->initialCons.empty()){
+            Constraint cTemp = cfg->initialCons.front();
+            cfg->initialCons.pop_front();
+            s->consList.push_back(cTemp);
+        }
         cfg->stateList.resize(id+1);
         raw_ostream &ROS = errs();
         formatted_raw_ostream OS(ROS);
 
         global_CFG.InsertCFGState(cfg->counter_state,name,func);
             
-//	    errs()<<"0:readBasicblock "<<func<<"\n";
-	    if(func==cfg->startFunc && b==F->begin()){
+//        errs()<<"0:readBasicblock "<<func<<"\n";
+        if(func==cfg->startFunc && b==F->begin()){
             s->level=0;
-			cfg->initialState=s;
-			s->isInitial=true;
+            cfg->initialState=s;
+            s->isInitial=true;
         }
-	    else if(b==F->begin()){
-			setFuncVariable(F, func, cfg);
-	    }
+        else if(b==F->begin()){
+            setFuncVariable(F, func, cfg);
+        }
 
             //Generate the new vector<Constraint>
         BasicBlock::iterator it_end = b->end();
         for(BasicBlock::iterator it = b->begin(); it != it_end; it ++){  
 
             const Instruction* I = dyn_cast<Instruction>(it);
-			SlotTracker SlotTable(F);
+            SlotTracker SlotTable(F);
             const Module* M = F?F->getParent():nullptr;
             InstParser W(OS, SlotTable, M, nullptr);
             W.setPrecision(precision);
             W.setMode(mode);
 
-//		    errs()<<"0.InL:";W.printInstructionLine(*I);
+//            errs()<<"0.InL:";W.printInstructionLine(*I);
                 //create the LabelMap
             if(it == b->begin()){
                 bool hasFromS = W.InsertCFGLabel(cfg,b,s, func, "", false);
@@ -373,49 +356,50 @@ void ProgramCFG::readBasicblock(BasicBlock *b, CFG *cfg, int time){
                     cfg->stateList[s->ID]=(*s);
                     return;
                 }
-			} 
+            } 
 
 //            errs()<<"1:readBasicblock "<<func<<"\t"<<s->level<<"\t"<<s->ID<<"\n";
             //pre process before set constraints
             W.preprocess(cfg, s, I, func, target);
             // create the constraint table(NOT TRANSITION)
             W.setConstraint(cfg, s, it, func, bound, dbg);
-				
-			string op = I->getOpcodeName();
-//			errs()<<"1:readBasicblock "<<func<<":"<<*I<<"\n";
-			if(op=="call"){
-				const CallInst *call = dyn_cast<CallInst>(I);
-				Function *f = call->getCalledFunction();
-				if(!f) 
-					errs() << "Find a CallInst: "<< *I <<"\n" << "But can't find which function it calls.\n";        
-			
+                
+            string op = I->getOpcodeName();
+//            errs()<<"1:readBasicblock "<<func<<":"<<*I<<"\n";
+            if(op=="call"){
+                const CallInst *call = dyn_cast<CallInst>(I);
+                Function *f = call->getCalledFunction();
+                if(!f) 
+                    errs() << "Find a CallInst: "<< *I <<"\n" << "But can't find which function it calls.\n";        
+            
                 if(f->getName()=="__BRICK_SPEC")
                     continue;
             // **************************Deal with Function isDefined****************************
-				if(!f->isDeclaration()) {
-					cfg->stateList[s->ID]=(*s);
+                if(!f->isDeclaration()) {
+                    cfg->stateList[s->ID]=(*s);
 
-					string callFunc = f->getName();
-					map<string ,int >::iterator it=cfg->funcTime.find(callFunc);
-					int t = 0;
-					if(it==cfg->funcTime.end())
-						cfg->funcTime.insert(pair<string,int>(callFunc,t));
-					else
-						t = ++it->second;
+                    string callFunc = f->getName();
+                    map<string ,int >::iterator it=cfg->funcTime.find(callFunc);
+                    int t = 0;
+                    if(it==cfg->funcTime.end())
+                        cfg->funcTime.insert(pair<string,int>(callFunc,t));
+                    else
+                        t = ++it->second;
 
-					readFunc(callFunc, cfg, t);
-					id = cfg->counter_state++;
-					string  str = convertToString(cfg->counter_s_state++);
-					name = "s"+str;
-					global_CFG.InsertCFGState(id,name,func);
+                    readFunc(callFunc, cfg, t);
+                    id = cfg->counter_state++;
+                    string  str = ConvertToString(cfg->counter_s_state);
+                    cfg->counter_s_state++;
+                    name = "s"+str;
+                    global_CFG.InsertCFGState(id,name,func);
 
-					string funcName = callFunc;
-					if(t>0)
-						funcName = callFunc+convertToString(t);
+                    string funcName = callFunc;
+                    if(t>0)
+                        funcName = callFunc+ConvertToString(t);
 
-					s = new State(false, id, name, func);
-					cfg->stateList.resize(id+1);
-					bool hasFromS = W.InsertCFGLabel(cfg, b, s, func, funcName+"_ret",true);
+                    s = new State(false, id, name, func);
+                    cfg->stateList.resize(id+1);
+                    bool hasFromS = W.InsertCFGLabel(cfg, b, s, func, funcName+"_ret",true);
                     cfg->retVar.pop_back();
                     if(!hasFromS){
                         cfg->counter_state--;
@@ -428,11 +412,11 @@ void ProgramCFG::readBasicblock(BasicBlock *b, CFG *cfg, int time){
                         cfg->stateList[s->ID]=(*s);
                         return;
                     }
-				}
-			}
-	    }
-	    cfg->stateList[s->ID] = (*s);
-	}
+                }
+            }
+        }
+        cfg->stateList[s->ID] = (*s);
+    }
 }
 
 int dfscount = 0;
@@ -452,7 +436,7 @@ void ProgramCFG::createSucc(BasicBlock *v){
         if(CallInst* call = dyn_cast<CallInst>(inst)){
 
             if(isa<UnreachableInst>(++inst)){//exit ,abort ,xalloc_die, program exit.
-                //	errs()<< *(--inst)<<"\n"; 
+                //    errs()<< *(--inst)<<"\n"; 
                 goto finish;
             }
             --inst; 
@@ -467,15 +451,15 @@ void ProgramCFG::createSucc(BasicBlock *v){
                 continue;
             }
             if(f->isDeclaration()) {
-//                		errs()<<"isDeclaration " << f->getName() << "\n";
+//                        errs()<<"isDeclaration " << f->getName() << "\n";
                 continue;
             }else{
 //               errs() << "hasDefinition " << f->getName() << "\n";
                }
             //only concerns the function in the targetFunctionList
-            //	if(targetFunctionList->find(f) == targetFunctionList->end()) continue; 
+            //    if(targetFunctionList->find(f) == targetFunctionList->end()) continue; 
 
-            //	errs() << "find a call : "<< f->getName() << "\n "; 
+            //    errs() << "find a call : "<< f->getName() << "\n "; 
 
             BasicBlock *entry = &f->getEntryBlock(); 
             CFGNode *entryNode =  &((*nodes)[entry]);//f's EntryBlock 
@@ -552,4 +536,5 @@ void ProgramCFG::bfs(CFGNode *r){
 
     }
 }
+
 

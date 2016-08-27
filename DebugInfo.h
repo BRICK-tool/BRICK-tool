@@ -1,4 +1,5 @@
-
+#ifndef _DEBUGINFO_h
+#define _DEBUGINFO_h
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -54,3 +55,5 @@ public:
 	void print();
 
 };
+
+#endif

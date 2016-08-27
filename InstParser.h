@@ -22,10 +22,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/TypeFinder.h"
 #include "llvm/Support/FormattedStream.h"
-#ifndef _DEBUGINFO_H_
-#define _DEBUGINFO_H_
 #include "DebugInfo.h"
-#endif
 #include "CFG.h"
 #include "general.h"
 namespace llvm {

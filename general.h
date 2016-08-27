@@ -1,5 +1,9 @@
+#ifndef _general_h
+#define _general_h
 #include <stdio.h>
 #include <iostream>
+#include <sstream>
+#include <cstring>
 #include <map>
 #include <string>
 #include <stdlib.h>
@@ -25,4 +29,11 @@ string int2string(const int i);
 
 string double2string(const double d);
 
-				
+string ConvertToString(const double d);
+
+double ConvertToDouble(const string s);
+
+#endif
+
+                
+

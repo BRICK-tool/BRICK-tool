@@ -57,5 +57,19 @@ string double2string(const double d)
   return str;
 }
 
+string ConvertToString(const double d){
+    ostringstream os;
+    if(os<<d)
+        return os.str();
+    return "invalid convertion";
+}
+
+double ConvertToDouble(const string s){
+    stringstream ss;
+    double val;
+    ss<<s;
+    ss>>val;
+    return val;
+} 
 
 
