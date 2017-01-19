@@ -6,8 +6,8 @@ LibDir="/usr/local/lib"
 if [ ! -d "$myPath" ]; then
 	mkdir "$myPath"
 fi 
-sudo rm -r {$LibDir}/buildCFG.so
-sudo ln -s ../../../Release+Asserts/lib/buildCFG.so {$LibDir}/buildCFG.so
+sudo rm -r ${LibDir}/buildCFG.so
+sudo ln -s ../../../Release+Asserts/lib/buildCFG.so ${LibDir}/buildCFG.so
 g++ main.cpp -o Bin/BRICK
 sudo chmod -R 777 Bin
 echo "Building finished!-----------------------Start run program in Directory Bin"
