@@ -90,8 +90,8 @@
  /home/lich/Documents/llvm/include/llvm/IR/TypeFinder.h \
  /home/lich/Documents/llvm/include/llvm/ADT/DenseSet.h \
  /home/lich/Documents/llvm/include/llvm/Support/FormattedStream.h \
- DebugInfo.h general.h Verification.h MinisatDebug.h dreal.h \
- LinearVerify.h MUSSAnalyzer.h UnlinearVerify.h System.h
+ DebugInfo.h general.h Verification.h MinisatDebug.h LinearVerify.h \
+ MUSSAnalyzer.h UnlinearVerify.h opensmt_c.h System.h
 
 /home/lich/Documents/llvm/include/llvm/Support/raw_ostream.h:
 
@@ -287,12 +287,12 @@ Verification.h:
 
 MinisatDebug.h:
 
-dreal.h:
-
 LinearVerify.h:
 
 MUSSAnalyzer.h:
 
 UnlinearVerify.h:
+
+opensmt_c.h:
 
 System.h:

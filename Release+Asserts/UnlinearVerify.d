@@ -84,7 +84,7 @@
  /home/lich/Documents/llvm/include/llvm/IR/DebugInfo.h \
  /home/lich/Documents/llvm/include/llvm/Support/Dwarf.h \
  /home/lich/Documents/llvm/include/llvm/IR/TypeBuilder.h general.h \
- dreal.h DebugInfo.h
+ opensmt_c.h DebugInfo.h
 
 UnlinearVerify.h:
 
@@ -260,6 +260,6 @@ convinent.h:
 
 general.h:
 
-dreal.h:
+opensmt_c.h:
 
 DebugInfo.h:

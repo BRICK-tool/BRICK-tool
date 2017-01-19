@@ -154,8 +154,8 @@ void opt(string name, int b, double p, int m, char* f, char* e, int o){
     string expr = "";
     if(e != NULL)
         expr += "-expression=\"" + string(e)+"\"";
-    string command = "opt -load buildCFG.so -load libcapd.so -load libibex.so"
-    " -load /usr/local/lib/libdreal.so -load libz3.so -load libminisat.so"
+    string command = "opt -load buildCFG.so -load libcapd.so -load libibex.so -load libgsl.so"
+    " -load libdreal.so -load libz3.so -load libminisat.so"
     " -buildCFG "+bound+" "+precision+" "+mode+" "+func+" "+output+" "+expr+"<"+name+".bc>"+name+"buildCFG.bc";
 	
     if(o==1)    

@@ -6,9 +6,10 @@
 #include <cstdlib>
 #include <sstream>
 #include <cstring>
-#include "dreal.h"
+#include "opensmt_c.h"
+//#include "dreal.h"
 //#include "Solver.h"
-//#include "dreal_c.h"
+//#include "opensmt_c.h"
 #include <fstream>
 #include "math.h"
 #include "DebugInfo.h"
@@ -20,17 +21,17 @@ extern char ** m_argv;
 
 class UnlinearVarTable{
 private:
-    dreal_context &ctx;
+    opensmt_context &ctx;
     int var_num;
     int alloca_num;
     map<int, double> varVal;
     map<int, int>storeMap;
     map<int, int> alias;
-    vector<dreal_expr> x;
+    vector<opensmt_expr> x;
     map<int, int> exprMap;
     CFG *cfg;
 public:
-    UnlinearVarTable(dreal_context &c, CFG *ha);
+    UnlinearVarTable(opensmt_context &c, CFG *ha);
 
     ~UnlinearVarTable();
 
@@ -41,7 +42,7 @@ public:
     void setVal(int ID, double val);
     void store(int ID1, int ID2);
     int getNum();
-    dreal_expr getX(int ID);
+    opensmt_expr getX(int ID);
     int load(int ID);
     bool hasAlias(Variable *v);
     Variable* getAlias(int ID);
@@ -57,24 +58,24 @@ public:
 class UnlinearVerify: public Verify{
 
     string smt;
-    dreal_context ctx;
+    opensmt_context ctx;
     UnlinearVarTable *table;
     double time;
     double precision;
     int outMode;
     DebugInfo *dbg;
 
-    dreal_expr getExpr(Variable *v, bool &treat, double &val, UnlinearVarTable *table);
-    dreal_expr dreal_mk_AND(dreal_context ctx, dreal_expr y, dreal_expr z, string name, unsigned num);
-    dreal_expr dreal_mk_NAND(dreal_context ctx, dreal_expr y, dreal_expr z, string name, unsigned num);
-    dreal_expr dreal_mk_OR(dreal_context ctx, dreal_expr y, dreal_expr z, string name, unsigned num);
-    dreal_expr dreal_mk_XOR(dreal_context ctx, dreal_expr y, dreal_expr z, string name, unsigned num);
-    dreal_expr dreal_mk_SREM(dreal_context ctx, dreal_expr y, dreal_expr z, string name);
-    dreal_expr dreal_mk_ASHR(dreal_context ctx, dreal_expr y, int rr, string name, unsigned num);
-    dreal_expr dreal_mk_SHL(dreal_context ctx, dreal_expr y, int rr, string name, unsigned num);
-    dreal_expr dreal_mk_INT_cmp(dreal_context ctx, dreal_expr y, dreal_expr z, Op_m pvop, string name);
+    opensmt_expr getExpr(Variable *v, bool &treat, double &val, UnlinearVarTable *table);
+    opensmt_expr opensmt_mk_AND(opensmt_context ctx, opensmt_expr y, opensmt_expr z, string name, unsigned num);
+    opensmt_expr opensmt_mk_NAND(opensmt_context ctx, opensmt_expr y, opensmt_expr z, string name, unsigned num);
+    opensmt_expr opensmt_mk_OR(opensmt_context ctx, opensmt_expr y, opensmt_expr z, string name, unsigned num);
+    opensmt_expr opensmt_mk_XOR(opensmt_context ctx, opensmt_expr y, opensmt_expr z, string name, unsigned num);
+    opensmt_expr opensmt_mk_SREM(opensmt_context ctx, opensmt_expr y, opensmt_expr z, string name);
+    opensmt_expr opensmt_mk_ASHR(opensmt_context ctx, opensmt_expr y, int rr, string name, unsigned num);
+    opensmt_expr opensmt_mk_SHL(opensmt_context ctx, opensmt_expr y, int rr, string name, unsigned num);
+    opensmt_expr opensmt_mk_INT_cmp(opensmt_context ctx, opensmt_expr x, opensmt_expr y, opensmt_expr z, Op_m pvop, string name);
     int getCMP(int rl, int rr, Op_m pvop);
-    dreal_expr tran_constraint(Constraint *con, UnlinearVarTable *table, int time);
+    opensmt_expr tran_constraint(Constraint *con, UnlinearVarTable *table, int time);
     void get_constraint(vector<Constraint> consList, UnlinearVarTable *table, int time, bool isTransition);
     void encode_path(CFG* ha, vector<int> patharray);
 
@@ -89,31 +90,31 @@ class UnlinearVerify: public Verify{
         core_index.clear();
         delete table;
 
-        dreal_reset(ctx);
-        //dreal_del_context(ctx);
-        ctx = dreal_mk_context(qf_nra);
-        dreal_set_precision(ctx, precision);
+        opensmt_reset(ctx);
+        //opensmt_del_context(ctx);
+        ctx = opensmt_mk_context(qf_nra);
+        opensmt_set_precision(ctx, precision);
     }
 public:
     UnlinearVerify(){
-        dreal_init();
-        ctx = dreal_mk_context(qf_nra);
+        opensmt_init();
+        ctx = opensmt_mk_context(qf_nra);
         table=NULL;
         time=0;
     }
     UnlinearVerify(double pre, DebugInfo *d, int mode){
-        dreal_init();
-        ctx = dreal_mk_context(qf_nra);
+        opensmt_init();
+        ctx = opensmt_mk_context(qf_nra);
         table=NULL;
         this->precision = pre;
-        dreal_set_precision(ctx, pre);
+        opensmt_set_precision(ctx, pre);
         this->dbg = d;
         this->outMode = mode;
         time=0;
     }
     void setPrecision(double pre){
         this->precision = pre;
-        dreal_set_precision(ctx, pre);
+        opensmt_set_precision(ctx, pre);
     }
     void setDebugInfo(DebugInfo *dbg){
         this->dbg = dbg;
@@ -123,7 +124,7 @@ public:
     }
     bool check(CFG* ha, vector<int> path);
     vector<IndexPair> get_core_index(){return core_index;}
-    ~UnlinearVerify(){delete table; dreal_del_context(ctx);index_cache.clear();core_index.clear();}
+    ~UnlinearVerify(){delete table; opensmt_del_context(ctx);index_cache.clear();core_index.clear();}
     void print_sol(CFG* cfg);
 
     double getTime(){return time;}

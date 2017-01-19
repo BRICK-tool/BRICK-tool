@@ -5,7 +5,7 @@ using namespace std;
 
 /***********************  Class UnlinearVarTable  *********************/
 
-    UnlinearVarTable::UnlinearVarTable(dreal_context &c, CFG *ha):ctx(c), cfg(ha){
+    UnlinearVarTable::UnlinearVarTable(opensmt_context &c, CFG *ha):ctx(c), cfg(ha){
         unsigned inputID=0;
         var_num = 0;
         alloca_num = 0;
@@ -19,24 +19,24 @@ using namespace std;
             if(inputID<cfg->mainInput.size()&&cfg->mainInput[inputID]==(int)i){
 
                 if(type==FP)
-                    x.push_back(dreal_mk_real_var(ctx, var.name.c_str(), -100.0, 100.0));
-//                x.push_back(dreal_mk_unbounded_real_var(ctx, var.name.c_str()));
+                    x.push_back(opensmt_mk_real_var(ctx, var.name.c_str(), -100.0, 100.0));
+//                x.push_back(opensmt_mk_unbounded_real_var(ctx, var.name.c_str()));
                 else if(type==INT)
-                    x.push_back(dreal_mk_int_var(ctx, var.name.c_str(), -100.0, 100.0));
+                    x.push_back(opensmt_mk_int_var(ctx, var.name.c_str(), -100.0, 100.0));
                 exprMap[i] = var_num;
-//                double const x_lb = dreal_get_lb(ctx, x[var_num]);
-//                double const x_ub = dreal_get_ub(ctx, x[var_num]);
+//                double const x_lb = opensmt_get_lb(ctx, x[var_num]);
+//                double const x_ub = opensmt_get_ub(ctx, x[var_num]);
 //                errs()<<var.name<<" = ["<<x_lb<<", "<<x_ub<<"]\n";
                 inputID++;
                 var_num++;
             }
             else if(type==FP){
-                x.push_back(dreal_mk_unbounded_real_var(ctx, var.name.c_str()));
+                x.push_back(opensmt_mk_unbounded_real_var(ctx, var.name.c_str()));
                 exprMap[i] = var_num; 
                 var_num++;
             }
             else if(type==INT){
-                x.push_back(dreal_mk_unbounded_int_var(ctx, var.name.c_str()));
+                x.push_back(opensmt_mk_unbounded_int_var(ctx, var.name.c_str()));
                 exprMap[i] = var_num; 
                 var_num++;
             }
@@ -49,9 +49,9 @@ using namespace std;
     void UnlinearVarTable::setX(int ID, int time, VarType type){
         int ID2 = exprMap[ID];
         if(type==FP)
-            x[ID2] = dreal_mk_unbounded_real_var(ctx, (cfg->variableList[ID].name+"_"+int2string(time)).c_str());
+            x[ID2] = opensmt_mk_unbounded_real_var(ctx, (cfg->variableList[ID].name+"_"+int2string(time)).c_str());
         else if(type==INT)
-            x[ID2] = dreal_mk_unbounded_int_var(ctx, (cfg->variableList[ID].name+"_"+int2string(time)).c_str());
+            x[ID2] = opensmt_mk_unbounded_int_var(ctx, (cfg->variableList[ID].name+"_"+int2string(time)).c_str());
         else
             errs()<<"SetX error 10086!!\n";
     }
@@ -78,7 +78,7 @@ using namespace std;
         return var_num;    
     }
     
-    dreal_expr UnlinearVarTable::getX(int ID){
+    opensmt_expr UnlinearVarTable::getX(int ID){
         int ID2 = exprMap[ID];
         return x[ID2];
     }
@@ -183,13 +183,13 @@ bool UnlinearVerify::check(CFG* ha, vector<int> path)
     int state_num=(path.size()+1)/2;
     clock_t start,finish;
 
-//    double pre = dreal_get_precision(ctx);
+//    double pre = opensmt_get_precision(ctx);
 //    cerr<<"Precision is "<<pre<<endl;
 
     encode_path(ha, path);
 
     start = clock();
-//    dreal_use_polytope(ctx);
+//    opensmt_use_polytope(ctx);
 
     bool res = analyze_unsat_core(state_num-1);
 
@@ -199,11 +199,11 @@ bool UnlinearVerify::check(CFG* ha, vector<int> path)
 //        errs()<<"Time:\t"<<ConvertToString(time_used)<<"ms\n";
     if(res == true){
         if(outMode==1)
-            cerr<<"dreal_result is sat\n\n\n";
+            cerr<<"opensmt_result is sat\n\n\n";
         return true;
     }
     if(outMode==1)
-        cerr<<"dreal_result is unsat\n\n\n";
+        cerr<<"opensmt_result is unsat\n\n\n";
     return false;
 }
 
@@ -211,20 +211,20 @@ void UnlinearVerify::print_sol(CFG* cfg) {
     vector<int> &x = cfg->mainInput;
     for(unsigned i=0;i<x.size();i++){
 
-        dreal_expr mainInput = table->getX(x[i]);
+        opensmt_expr mainInput = table->getX(x[i]);
 
-        double const x_lb = dreal_get_lb(ctx, mainInput);
-        double const x_ub = dreal_get_ub(ctx, mainInput);
+        double const x_lb = opensmt_get_lb(ctx, mainInput);
+        double const x_ub = opensmt_get_ub(ctx, mainInput);
         errs()<<cfg->variableList[x[i]].name<<" = ["<<x_lb<<", "<<x_ub<<"]\n";
     }
     return;
 }
 
-dreal_expr UnlinearVerify::getExpr(Variable *v, bool &treat, double &val, UnlinearVarTable *table)
+opensmt_expr UnlinearVerify::getExpr(Variable *v, bool &treat, double &val, UnlinearVarTable *table)
 {
-    dreal_expr expr=NULL;
+    opensmt_expr expr=NULL;
     if(v->type==NUM){
-        expr = dreal_mk_num_from_string(ctx, v->name.c_str());
+        expr = opensmt_mk_num_from_string(ctx, v->name.c_str());
         val = ConvertToDouble(v->name);
     }
     else if(v->type == INT || v->type==FP){
@@ -236,255 +236,255 @@ dreal_expr UnlinearVerify::getExpr(Variable *v, bool &treat, double &val, Unline
     return expr;
 }
 
-dreal_expr UnlinearVerify::dreal_mk_AND(dreal_context ctx, dreal_expr y, dreal_expr z, string name, unsigned num){
-    dreal_expr* xlt = new dreal_expr[num];
-    dreal_expr* xrt = new dreal_expr[num];
-    dreal_expr* xt = new dreal_expr[num];
-    vector<dreal_expr> xl;
-    vector<dreal_expr> xr;
+opensmt_expr UnlinearVerify::opensmt_mk_AND(opensmt_context ctx, opensmt_expr y, opensmt_expr z, string name, unsigned num){
+    opensmt_expr* xlt = new opensmt_expr[num];
+    opensmt_expr* xrt = new opensmt_expr[num];
+    opensmt_expr* xt = new opensmt_expr[num];
+    vector<opensmt_expr> xl;
+    vector<opensmt_expr> xr;
 
     for(unsigned i=0;i<num;i++){
         string lname = name+"_l"+ConvertToString(i);
-        xl.push_back(dreal_mk_int_var(ctx, lname.c_str(), 0, 1));
-        xlt[i] = dreal_mk_times_2(ctx, xl[i], dreal_mk_pow(ctx, dreal_mk_num(ctx, 2), dreal_mk_num(ctx, i)));
+        xl.push_back(opensmt_mk_int_var(ctx, lname.c_str(), 0, 1));
+        xlt[i] = opensmt_mk_times_2(ctx, xl[i], opensmt_mk_pow(ctx, opensmt_mk_num(ctx, 2), opensmt_mk_num(ctx, i)));
     }
-    dreal_expr ast_l = dreal_mk_eq(ctx, y, dreal_mk_plus(ctx, xlt, num));
+    opensmt_expr ast_l = opensmt_mk_eq(ctx, y, opensmt_mk_plus(ctx, xlt, num));
     if(outMode==1){
-        dreal_print_expr(ast_l);
+        opensmt_print_expr(ast_l);
         cerr<< endl;
     }
-    dreal_assert(ctx, ast_l);
+    opensmt_assert(ctx, ast_l);
 
     for(unsigned i=0;i<num;i++){
         string rname = name+"_r"+ConvertToString(i);
-        xr.push_back(dreal_mk_int_var(ctx, rname.c_str(), 0, 1));
-        xrt[i] = dreal_mk_times_2(ctx, xr[i], dreal_mk_pow(ctx, dreal_mk_num(ctx, 2), dreal_mk_num(ctx, i)));
+        xr.push_back(opensmt_mk_int_var(ctx, rname.c_str(), 0, 1));
+        xrt[i] = opensmt_mk_times_2(ctx, xr[i], opensmt_mk_pow(ctx, opensmt_mk_num(ctx, 2), opensmt_mk_num(ctx, i)));
     }
-    dreal_expr ast_r = dreal_mk_eq(ctx, z, dreal_mk_plus(ctx, xrt, num));
+    opensmt_expr ast_r = opensmt_mk_eq(ctx, z, opensmt_mk_plus(ctx, xrt, num));
     if(outMode==1){
-        dreal_print_expr(ast_r);
+        opensmt_print_expr(ast_r);
         cerr<< endl;
     }
-    dreal_assert(ctx, ast_r);
+    opensmt_assert(ctx, ast_r);
 
     for(unsigned i=0; i<num; i++){
-        xt[i] = dreal_mk_times_2(ctx, dreal_mk_times_2(ctx, xl[i], xr[i]), dreal_mk_pow(ctx, dreal_mk_num(ctx, 2), dreal_mk_num(ctx, i)));
+        xt[i] = opensmt_mk_times_2(ctx, opensmt_mk_times_2(ctx, xl[i], xr[i]), opensmt_mk_pow(ctx, opensmt_mk_num(ctx, 2), opensmt_mk_num(ctx, i)));
     }
 
-    dreal_expr ast = dreal_mk_plus(ctx, xt, num);
+    opensmt_expr ast = opensmt_mk_plus(ctx, xt, num);
     return ast;
 }
 
-dreal_expr UnlinearVerify::dreal_mk_NAND(dreal_context ctx, dreal_expr y, dreal_expr z, string name, unsigned num){
-    dreal_expr* xlt = new dreal_expr[num];
-    dreal_expr* xrt = new dreal_expr[num];
-    dreal_expr* xt = new dreal_expr[num];
-    vector<dreal_expr> xl;
-    vector<dreal_expr> xr;
+opensmt_expr UnlinearVerify::opensmt_mk_NAND(opensmt_context ctx, opensmt_expr y, opensmt_expr z, string name, unsigned num){
+    opensmt_expr* xlt = new opensmt_expr[num];
+    opensmt_expr* xrt = new opensmt_expr[num];
+    opensmt_expr* xt = new opensmt_expr[num];
+    vector<opensmt_expr> xl;
+    vector<opensmt_expr> xr;
 
     for(unsigned i=0;i<num;i++){
         string lname = name+"_l"+ConvertToString(i);
-        xl.push_back(dreal_mk_int_var(ctx, lname.c_str(), 0, 1));
-        xlt[i] = dreal_mk_times_2(ctx, xl[i], dreal_mk_pow(ctx, dreal_mk_num(ctx, 2), dreal_mk_num(ctx, i)));
+        xl.push_back(opensmt_mk_int_var(ctx, lname.c_str(), 0, 1));
+        xlt[i] = opensmt_mk_times_2(ctx, xl[i], opensmt_mk_pow(ctx, opensmt_mk_num(ctx, 2), opensmt_mk_num(ctx, i)));
     }
-    dreal_expr ast_l = dreal_mk_eq(ctx, y, dreal_mk_plus(ctx, xlt, num));
+    opensmt_expr ast_l = opensmt_mk_eq(ctx, y, opensmt_mk_plus(ctx, xlt, num));
     if(outMode==1){
-        dreal_print_expr(ast_l);
+        opensmt_print_expr(ast_l);
         cerr<< endl;
     }
-    dreal_assert(ctx, ast_l);
+    opensmt_assert(ctx, ast_l);
 
     for(unsigned i=0;i<num;i++){
         string rname = name+"_r"+ConvertToString(i);
-        xr.push_back(dreal_mk_int_var(ctx, rname.c_str(), 0, 1));
-        xrt[i] = dreal_mk_times_2(ctx, xr[i], dreal_mk_pow(ctx, dreal_mk_num(ctx, 2), dreal_mk_num(ctx, i)));
+        xr.push_back(opensmt_mk_int_var(ctx, rname.c_str(), 0, 1));
+        xrt[i] = opensmt_mk_times_2(ctx, xr[i], opensmt_mk_pow(ctx, opensmt_mk_num(ctx, 2), opensmt_mk_num(ctx, i)));
     }
-    dreal_expr ast_r = dreal_mk_eq(ctx, z, dreal_mk_plus(ctx, xrt, num));
+    opensmt_expr ast_r = opensmt_mk_eq(ctx, z, opensmt_mk_plus(ctx, xrt, num));
     if(outMode==1){
-        dreal_print_expr(ast_r);
+        opensmt_print_expr(ast_r);
         cerr<< endl;
     }
-    dreal_assert(ctx, ast_r);
+    opensmt_assert(ctx, ast_r);
 
     for(unsigned i=0; i<num; i++){
-        xt[i] = dreal_mk_times_2(ctx, dreal_mk_minus(ctx, dreal_mk_num(ctx, 1), dreal_mk_times_2(ctx, xl[i], xr[i])), dreal_mk_pow(ctx, dreal_mk_num(ctx, 2), dreal_mk_num(ctx, i)));
+        xt[i] = opensmt_mk_times_2(ctx, opensmt_mk_minus(ctx, opensmt_mk_num(ctx, 1), opensmt_mk_times_2(ctx, xl[i], xr[i])), opensmt_mk_pow(ctx, opensmt_mk_num(ctx, 2), opensmt_mk_num(ctx, i)));
     }
 
-    dreal_expr ast = dreal_mk_plus(ctx, xt, num);
+    opensmt_expr ast = opensmt_mk_plus(ctx, xt, num);
     return ast;
 }
 
-dreal_expr UnlinearVerify::dreal_mk_OR(dreal_context ctx, dreal_expr y, dreal_expr z, string name, unsigned num){
-    dreal_expr* xlt = new dreal_expr[num];
-    dreal_expr* xrt = new dreal_expr[num];
-    dreal_expr* xt = new dreal_expr[num];
-    vector<dreal_expr> xl;
-    vector<dreal_expr> xr;
+opensmt_expr UnlinearVerify::opensmt_mk_OR(opensmt_context ctx, opensmt_expr y, opensmt_expr z, string name, unsigned num){
+    opensmt_expr* xlt = new opensmt_expr[num];
+    opensmt_expr* xrt = new opensmt_expr[num];
+    opensmt_expr* xt = new opensmt_expr[num];
+    vector<opensmt_expr> xl;
+    vector<opensmt_expr> xr;
 
     for(unsigned i=0;i<num;i++){
         string lname = name+"_l"+ConvertToString(i);
-        xl.push_back(dreal_mk_int_var(ctx, lname.c_str(), 0, 1));
-        xlt[i] = dreal_mk_times_2(ctx, xl[i], dreal_mk_pow(ctx, dreal_mk_num(ctx, 2), dreal_mk_num(ctx, i)));
+        xl.push_back(opensmt_mk_int_var(ctx, lname.c_str(), 0, 1));
+        xlt[i] = opensmt_mk_times_2(ctx, xl[i], opensmt_mk_pow(ctx, opensmt_mk_num(ctx, 2), opensmt_mk_num(ctx, i)));
     }
-    dreal_expr ast_l = dreal_mk_eq(ctx, y, dreal_mk_plus(ctx, xlt, num));
+    opensmt_expr ast_l = opensmt_mk_eq(ctx, y, opensmt_mk_plus(ctx, xlt, num));
     if(outMode==1){
-        dreal_print_expr(ast_l);
+        opensmt_print_expr(ast_l);
         cerr<< endl;
     }
-    dreal_assert(ctx, ast_l);
+    opensmt_assert(ctx, ast_l);
 
     for(unsigned i=0;i<num;i++){
         string rname = name+"_r"+ConvertToString(i);
-        xr.push_back(dreal_mk_int_var(ctx, rname.c_str(), 0, 1));
-        xrt[i] = dreal_mk_times_2(ctx, xr[i], dreal_mk_pow(ctx, dreal_mk_num(ctx, 2), dreal_mk_num(ctx, i)));
+        xr.push_back(opensmt_mk_int_var(ctx, rname.c_str(), 0, 1));
+        xrt[i] = opensmt_mk_times_2(ctx, xr[i], opensmt_mk_pow(ctx, opensmt_mk_num(ctx, 2), opensmt_mk_num(ctx, i)));
     }
-    dreal_expr ast_r = dreal_mk_eq(ctx, z, dreal_mk_plus(ctx, xrt, num));
+    opensmt_expr ast_r = opensmt_mk_eq(ctx, z, opensmt_mk_plus(ctx, xrt, num));
     if(outMode==1){
-        dreal_print_expr(ast_r);
+        opensmt_print_expr(ast_r);
         cerr<< endl;
     }
-    dreal_assert(ctx, ast_r);
+    opensmt_assert(ctx, ast_r);
 
     for(unsigned i=0; i<num; i++){
-        dreal_expr xl_t = dreal_mk_minus(ctx, dreal_mk_num(ctx, 1), xl[i]);
-        dreal_expr xr_t = dreal_mk_minus(ctx, dreal_mk_num(ctx, 1), xr[i]);
-        xt[i] = dreal_mk_times_2(ctx, dreal_mk_minus(ctx, dreal_mk_num(ctx, 1), dreal_mk_times_2(ctx, xl_t, xr_t)), dreal_mk_pow(ctx, dreal_mk_num(ctx, 2), dreal_mk_num(ctx, i)));
+        opensmt_expr xl_t = opensmt_mk_minus(ctx, opensmt_mk_num(ctx, 1), xl[i]);
+        opensmt_expr xr_t = opensmt_mk_minus(ctx, opensmt_mk_num(ctx, 1), xr[i]);
+        xt[i] = opensmt_mk_times_2(ctx, opensmt_mk_minus(ctx, opensmt_mk_num(ctx, 1), opensmt_mk_times_2(ctx, xl_t, xr_t)), opensmt_mk_pow(ctx, opensmt_mk_num(ctx, 2), opensmt_mk_num(ctx, i)));
     }
 
-    dreal_expr ast = dreal_mk_plus(ctx, xt, num);
+    opensmt_expr ast = opensmt_mk_plus(ctx, xt, num);
     return ast;
 }
 
-dreal_expr UnlinearVerify::dreal_mk_XOR(dreal_context ctx, dreal_expr y, dreal_expr z, string name, unsigned num){
-    dreal_expr* xlt = new dreal_expr[num];
-    dreal_expr* xrt = new dreal_expr[num];
-    dreal_expr* xt = new dreal_expr[num];
-    vector<dreal_expr> xl;
-    vector<dreal_expr> xr;
+opensmt_expr UnlinearVerify::opensmt_mk_XOR(opensmt_context ctx, opensmt_expr y, opensmt_expr z, string name, unsigned num){
+    opensmt_expr* xlt = new opensmt_expr[num];
+    opensmt_expr* xrt = new opensmt_expr[num];
+    opensmt_expr* xt = new opensmt_expr[num];
+    vector<opensmt_expr> xl;
+    vector<opensmt_expr> xr;
 
     for(unsigned i=0;i<num;i++){
         string lname = name+"_l"+ConvertToString(i);
-        xl.push_back(dreal_mk_int_var(ctx, lname.c_str(), 0, 1));
-        xlt[i] = dreal_mk_times_2(ctx, xl[i], dreal_mk_pow(ctx, dreal_mk_num(ctx, 2), dreal_mk_num(ctx, i)));
+        xl.push_back(opensmt_mk_int_var(ctx, lname.c_str(), 0, 1));
+        xlt[i] = opensmt_mk_times_2(ctx, xl[i], opensmt_mk_pow(ctx, opensmt_mk_num(ctx, 2), opensmt_mk_num(ctx, i)));
     }
-    dreal_expr ast_l = dreal_mk_eq(ctx, y, dreal_mk_plus(ctx, xlt, num));
+    opensmt_expr ast_l = opensmt_mk_eq(ctx, y, opensmt_mk_plus(ctx, xlt, num));
     if(outMode==1){
-        dreal_print_expr(ast_l);
+        opensmt_print_expr(ast_l);
         cerr<< endl;
     }
-    dreal_assert(ctx, ast_l);
+    opensmt_assert(ctx, ast_l);
 
     for(unsigned i=0;i<num;i++){
         string rname = name+"_r"+ConvertToString(i);
-        xr.push_back(dreal_mk_int_var(ctx, rname.c_str(), 0, 1));
-        xrt[i] = dreal_mk_times_2(ctx, xr[i], dreal_mk_pow(ctx, dreal_mk_num(ctx, 2), dreal_mk_num(ctx, i)));
+        xr.push_back(opensmt_mk_int_var(ctx, rname.c_str(), 0, 1));
+        xrt[i] = opensmt_mk_times_2(ctx, xr[i], opensmt_mk_pow(ctx, opensmt_mk_num(ctx, 2), opensmt_mk_num(ctx, i)));
     }
-    dreal_expr ast_r = dreal_mk_eq(ctx, z, dreal_mk_plus(ctx, xrt, num));
+    opensmt_expr ast_r = opensmt_mk_eq(ctx, z, opensmt_mk_plus(ctx, xrt, num));
     if(outMode==1){
-        dreal_print_expr(ast_r);
+        opensmt_print_expr(ast_r);
         cerr<< endl;
     }
-    dreal_assert(ctx, ast_r);
+    opensmt_assert(ctx, ast_r);
 
     for(unsigned i=0; i<num; i++){
-        dreal_expr ite = dreal_mk_ite(ctx, dreal_mk_eq(ctx, xl[i], xr[i]), dreal_mk_num(ctx, 0), dreal_mk_num(ctx, 1));
-        xt[i] = dreal_mk_times_2(ctx, ite, dreal_mk_pow(ctx, dreal_mk_num(ctx, 2), dreal_mk_num(ctx, i)));
+        opensmt_expr ite = opensmt_mk_ite(ctx, opensmt_mk_eq(ctx, xl[i], xr[i]), opensmt_mk_num(ctx, 0), opensmt_mk_num(ctx, 1));
+        xt[i] = opensmt_mk_times_2(ctx, ite, opensmt_mk_pow(ctx, opensmt_mk_num(ctx, 2), opensmt_mk_num(ctx, i)));
     }
 
-    dreal_expr ast = dreal_mk_plus(ctx, xt, num);
+    opensmt_expr ast = opensmt_mk_plus(ctx, xt, num);
     return ast;
 }
 
-dreal_expr UnlinearVerify::dreal_mk_SREM(dreal_context ctx, dreal_expr y, dreal_expr z, string name){
+opensmt_expr UnlinearVerify::opensmt_mk_SREM(opensmt_context ctx, opensmt_expr y, opensmt_expr z, string name){
     string div_name = name+"_div";
     string real_name = name+"_divreal";
-    dreal_expr div_real = dreal_mk_unbounded_real_var(ctx, real_name.c_str());
-    dreal_expr div_expr = dreal_mk_unbounded_int_var(ctx, div_name.c_str());
-    dreal_expr ast_t = dreal_mk_eq(ctx, div_real, dreal_mk_div(ctx, y, z));
+    opensmt_expr div_real = opensmt_mk_unbounded_real_var(ctx, real_name.c_str());
+    opensmt_expr div_expr = opensmt_mk_unbounded_int_var(ctx, div_name.c_str());
+    opensmt_expr ast_t = opensmt_mk_eq(ctx, div_real, opensmt_mk_div(ctx, y, z));
     if(outMode==1){
-        dreal_print_expr(ast_t);
+        opensmt_print_expr(ast_t);
         cerr<< endl;
     }
-    dreal_assert(ctx, ast_t);
+    opensmt_assert(ctx, ast_t);
 
-    dreal_expr ast_tleq = dreal_mk_leq(ctx, div_expr, div_real);
-    dreal_expr ast_tgt = dreal_mk_gt(ctx, div_expr, dreal_mk_minus(ctx, div_real, dreal_mk_num(ctx, 1)));
-    dreal_expr ast_and = dreal_mk_and_2(ctx, ast_tleq, ast_tgt);
+    opensmt_expr ast_tleq = opensmt_mk_leq(ctx, div_expr, div_real);
+    opensmt_expr ast_tgt = opensmt_mk_gt(ctx, div_expr, opensmt_mk_minus(ctx, div_real, opensmt_mk_num(ctx, 1)));
+    opensmt_expr ast_and = opensmt_mk_and_2(ctx, ast_tleq, ast_tgt);
     if(outMode==1){
-        dreal_print_expr(ast_and);
+        opensmt_print_expr(ast_and);
         cerr<< endl;
     }
-    dreal_assert(ctx, ast_and);
+    opensmt_assert(ctx, ast_and);
 
-    dreal_expr ast = dreal_mk_minus(ctx, y, dreal_mk_times_2(ctx, div_expr, z));
+    opensmt_expr ast = opensmt_mk_minus(ctx, y, opensmt_mk_times_2(ctx, div_expr, z));
     return ast;
 }
 
-dreal_expr UnlinearVerify::dreal_mk_ASHR(dreal_context ctx, dreal_expr y, int rr, string name, unsigned num){
-    dreal_expr* xt = new dreal_expr[num];
-    vector<dreal_expr> x;
+opensmt_expr UnlinearVerify::opensmt_mk_ASHR(opensmt_context ctx, opensmt_expr y, int rr, string name, unsigned num){
+    opensmt_expr* xt = new opensmt_expr[num];
+    vector<opensmt_expr> x;
 
     for(unsigned i=0;i<num;i++){
         string tname = name+"_t"+ConvertToString(i);
-        x.push_back(dreal_mk_int_var(ctx, tname.c_str(), 0, 1));
-        xt[i] = dreal_mk_times_2(ctx, x[i], dreal_mk_pow(ctx, dreal_mk_num(ctx, 2), dreal_mk_num(ctx, i)));
+        x.push_back(opensmt_mk_int_var(ctx, tname.c_str(), 0, 1));
+        xt[i] = opensmt_mk_times_2(ctx, x[i], opensmt_mk_pow(ctx, opensmt_mk_num(ctx, 2), opensmt_mk_num(ctx, i)));
     }
-    dreal_expr ast_t = dreal_mk_eq(ctx, y, dreal_mk_plus(ctx, xt, num));
+    opensmt_expr ast_t = opensmt_mk_eq(ctx, y, opensmt_mk_plus(ctx, xt, num));
     if(outMode==1){
-        dreal_print_expr(ast_t);
+        opensmt_print_expr(ast_t);
         cerr<< endl;
     }
-    dreal_assert(ctx, ast_t);
+    opensmt_assert(ctx, ast_t);
 
     delete xt;
-    xt = new dreal_expr[num-rr];
+    xt = new opensmt_expr[num-rr];
     for(unsigned i=0; i<num-rr; i++){
-        xt[i] = dreal_mk_times_2(ctx, x[i+rr], dreal_mk_pow(ctx, dreal_mk_num(ctx, 2), dreal_mk_num(ctx, i)));
+        xt[i] = opensmt_mk_times_2(ctx, x[i+rr], opensmt_mk_pow(ctx, opensmt_mk_num(ctx, 2), opensmt_mk_num(ctx, i)));
     }
 
-    dreal_expr ast = dreal_mk_plus(ctx, xt, num-rr);
+    opensmt_expr ast = opensmt_mk_plus(ctx, xt, num-rr);
     return ast;
 }
 
-dreal_expr UnlinearVerify::dreal_mk_SHL(dreal_context ctx, dreal_expr y, int rr, string name, unsigned num){
-    dreal_expr* xt = new dreal_expr[num];
-    vector<dreal_expr> x;
+opensmt_expr UnlinearVerify::opensmt_mk_SHL(opensmt_context ctx, opensmt_expr y, int rr, string name, unsigned num){
+    opensmt_expr* xt = new opensmt_expr[num];
+    vector<opensmt_expr> x;
 
     for(unsigned i=0;i<num;i++){
         string tname = name+"_t"+ConvertToString(i);
-        x.push_back(dreal_mk_int_var(ctx, tname.c_str(), 0, 1));
-        xt[i] = dreal_mk_times_2(ctx, x[i], dreal_mk_pow(ctx, dreal_mk_num(ctx, 2), dreal_mk_num(ctx, i)));
+        x.push_back(opensmt_mk_int_var(ctx, tname.c_str(), 0, 1));
+        xt[i] = opensmt_mk_times_2(ctx, x[i], opensmt_mk_pow(ctx, opensmt_mk_num(ctx, 2), opensmt_mk_num(ctx, i)));
     }
-    dreal_expr ast_t = dreal_mk_eq(ctx, y, dreal_mk_plus(ctx, xt, num));
+    opensmt_expr ast_t = opensmt_mk_eq(ctx, y, opensmt_mk_plus(ctx, xt, num));
     
     if(outMode==1){
-        dreal_print_expr(ast_t);
+        opensmt_print_expr(ast_t);
         cerr<< endl;
     }
-    dreal_assert(ctx, ast_t);
+    opensmt_assert(ctx, ast_t);
 
     delete xt;
-    xt = new dreal_expr[num-rr];
+    xt = new opensmt_expr[num-rr];
     for(unsigned i=0; i<num-rr; i++){
-        xt[i] = dreal_mk_times_2(ctx, x[i], dreal_mk_pow(ctx, dreal_mk_num(ctx, 2), dreal_mk_num(ctx, i+rr)));
+        xt[i] = opensmt_mk_times_2(ctx, x[i], opensmt_mk_pow(ctx, opensmt_mk_num(ctx, 2), opensmt_mk_num(ctx, i+rr)));
     }
 
-    dreal_expr ast = dreal_mk_plus(ctx, xt, num-rr);
+    opensmt_expr ast = opensmt_mk_plus(ctx, xt, num-rr);
     return ast;
 }
 
-dreal_expr UnlinearVerify::dreal_mk_INT_cmp(dreal_context ctx, dreal_expr y, dreal_expr z, Op_m pvop, string name){
-    dreal_expr cmp;
+opensmt_expr UnlinearVerify::opensmt_mk_INT_cmp(opensmt_context ctx, opensmt_expr x, opensmt_expr y, opensmt_expr z, Op_m pvop, string name){
+    opensmt_expr cmp;
     switch(pvop){
-        case lt:cmp = dreal_mk_lt(ctx, y, z);break;
-        case le:cmp = dreal_mk_leq(ctx, y, z);break;
-        case gt:cmp = dreal_mk_gt(ctx, y, z);break;
-        case ge:cmp = dreal_mk_geq(ctx, y, z);break;
-        case eq:cmp = dreal_mk_eq(ctx, y, z);break;
-        case ne:cmp = dreal_mk_not(ctx, dreal_mk_eq(ctx, y, z));break;
-        default:errs()<<"UnlinearVerify::dreal_mk_INT_cmp error\n";
+        case lt:cmp = opensmt_mk_lt(ctx, y, z);break;
+        case le:cmp = opensmt_mk_leq(ctx, y, z);break;
+        case gt:cmp = opensmt_mk_gt(ctx, y, z);break;
+        case ge:cmp = opensmt_mk_geq(ctx, y, z);break;
+        case eq:cmp = opensmt_mk_eq(ctx, y, z);break;
+        case ne:cmp = opensmt_mk_not(ctx, opensmt_mk_eq(ctx, y, z));break;
+        default:errs()<<"UnlinearVerify::opensmt_mk_INT_cmp error\n";
     }
-    dreal_expr assign = dreal_mk_ite(ctx, cmp, dreal_mk_num(ctx, 1), dreal_mk_num(ctx, 0));
+    opensmt_expr assign = opensmt_mk_ite(ctx, cmp, opensmt_mk_eq(ctx, x, opensmt_mk_num(ctx, 1)), opensmt_mk_eq(ctx, x, opensmt_mk_num(ctx, 0)));
     
     return assign;
 }
@@ -505,14 +505,14 @@ int UnlinearVerify::getCMP(int rl, int rr, Op_m pvop){
     return 0;
 }
 
-dreal_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *table, int time)
+opensmt_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *table, int time)
 {
     dbg->getConsInfo(con);
     Operator op = con->op;
     
-    dreal_expr exprl; 
-    dreal_expr exprr;
-    dreal_expr ast; 
+    opensmt_expr exprl; 
+    opensmt_expr exprr;
+    opensmt_expr ast; 
     
     CFG *cfg = table->getCFG();
 
@@ -540,22 +540,22 @@ dreal_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *ta
                     errs()<<"0.LT GetVal error "<<ID1<<"\t"<<cfg->variableList[ID1].name<<"\n";
                 if(!table->getVal(ID2,rval))
                     errs()<<"1.LT GetVal error "<<ID2<<"\t"<<cfg->variableList[ID2].name<<"\n";
-                exprl = dreal_mk_num(ctx, lval);
-                exprr = dreal_mk_num(ctx, rval);
+                exprl = opensmt_mk_num(ctx, lval);
+                exprr = opensmt_mk_num(ctx, rval);
             }
             else{
                 if(lv->type==NUM){
-                    exprl = dreal_mk_num_from_string(ctx, lv->name.c_str());
+                    exprl = opensmt_mk_num_from_string(ctx, lv->name.c_str());
                 }
                 else
                     exprl = table->getX(ID1);
                 if(rv->type==NUM){
-                    exprr = dreal_mk_num_from_string(ctx, rv->name.c_str());
+                    exprr = opensmt_mk_num_from_string(ctx, rv->name.c_str());
                 }
                 else
                     exprr = table->getX(ID2);
             }
-            ast = dreal_mk_lt(ctx, exprl, exprr);
+            ast = opensmt_mk_lt(ctx, exprl, exprr);
             break;
         case LE:    
             lpv = con->lpvList;
@@ -575,22 +575,22 @@ dreal_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *ta
                     errs()<<"0.LE GetVal error "<<ID1<<"\t"<<cfg->variableList[ID1].name<<"\n";
                 if(!table->getVal(ID2,rval))
                     errs()<<"1.LE GetVal error "<<ID2<<"\t"<<cfg->variableList[ID2].name<<"\n";
-                exprl = dreal_mk_num(ctx, lval);
-                exprr = dreal_mk_num(ctx, rval);
+                exprl = opensmt_mk_num(ctx, lval);
+                exprr = opensmt_mk_num(ctx, rval);
             }
             else{
                 if(lv->type==NUM){
-                    exprl = dreal_mk_num_from_string(ctx, lv->name.c_str());
+                    exprl = opensmt_mk_num_from_string(ctx, lv->name.c_str());
                 }
                 else
                     exprl = table->getX(ID1);
                 if(rv->type==NUM){
-                    exprr = dreal_mk_num_from_string(ctx, rv->name.c_str());
+                    exprr = opensmt_mk_num_from_string(ctx, rv->name.c_str());
                 }
                 else
                     exprr = table->getX(ID2);
             }
-            ast = dreal_mk_leq(ctx, exprl, exprr);
+            ast = opensmt_mk_leq(ctx, exprl, exprr);
             break;
         case GT:    
             lpv = con->lpvList;
@@ -610,22 +610,22 @@ dreal_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *ta
                     errs()<<"0.GT GetVal error "<<ID1<<"\t"<<cfg->variableList[ID1].name<<"\n";
                 if(!table->getVal(ID2,rval))
                     errs()<<"1.GT GetVal error "<<ID2<<"\t"<<cfg->variableList[ID2].name<<"\n";
-                exprl = dreal_mk_num(ctx, lval);
-                exprr = dreal_mk_num(ctx, rval);
+                exprl = opensmt_mk_num(ctx, lval);
+                exprr = opensmt_mk_num(ctx, rval);
             }
             else{
                 if(lv->type==NUM){
-                    exprl = dreal_mk_num_from_string(ctx, lv->name.c_str());
+                    exprl = opensmt_mk_num_from_string(ctx, lv->name.c_str());
                 }
                 else
                     exprl = table->getX(ID1);
                 if(rv->type==NUM){
-                    exprr = dreal_mk_num_from_string(ctx, rv->name.c_str());
+                    exprr = opensmt_mk_num_from_string(ctx, rv->name.c_str());
                 }
                 else
                     exprr = table->getX(ID2);
             }
-            ast = dreal_mk_gt(ctx, exprl, exprr);
+            ast = opensmt_mk_gt(ctx, exprl, exprr);
             break;
         case GE:    
             lpv = con->lpvList;
@@ -645,22 +645,22 @@ dreal_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *ta
                     errs()<<"0.GE GetVal error "<<ID1<<"\t"<<cfg->variableList[ID1].name<<"\n";
                 if(!table->getVal(ID2,rval))
                     errs()<<"1.GE GetVal error "<<ID2<<"\t"<<cfg->variableList[ID2].name<<"\n";
-                exprl = dreal_mk_num(ctx, lval);
-                exprr = dreal_mk_num(ctx, rval);
+                exprl = opensmt_mk_num(ctx, lval);
+                exprr = opensmt_mk_num(ctx, rval);
             }
             else{
                 if(lv->type==NUM){
-                    exprl = dreal_mk_num_from_string(ctx, lv->name.c_str());
+                    exprl = opensmt_mk_num_from_string(ctx, lv->name.c_str());
                 }
                 else
                     exprl = table->getX(ID1);
                 if(rv->type==NUM){
-                    exprr = dreal_mk_num_from_string(ctx, rv->name.c_str());
+                    exprr = opensmt_mk_num_from_string(ctx, rv->name.c_str());
                 }
                 else
                     exprr = table->getX(ID2);
             }
-            ast = dreal_mk_geq(ctx, exprl, exprr);
+            ast = opensmt_mk_geq(ctx, exprl, exprr);
             break;
         case EQ:    
             lpv = con->lpvList;
@@ -680,22 +680,22 @@ dreal_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *ta
                     errs()<<"0.EQ GetVal error "<<ID1<<"\t"<<cfg->variableList[ID1].name<<"\n";
                 if(!table->getVal(ID2,rval))
                     errs()<<"1.EQ GetVal error "<<ID2<<"\t"<<cfg->variableList[ID2].name<<"\n";
-                exprl = dreal_mk_num(ctx, lval);
-                exprr = dreal_mk_num(ctx, rval);
+                exprl = opensmt_mk_num(ctx, lval);
+                exprr = opensmt_mk_num(ctx, rval);
             }
             else{
                 if(lv->type==NUM){
-                    exprl = dreal_mk_num_from_string(ctx, lv->name.c_str());
+                    exprl = opensmt_mk_num_from_string(ctx, lv->name.c_str());
                 }
                 else
                     exprl = table->getX(ID1);
                 if(rv->type==NUM){
-                    exprr = dreal_mk_num_from_string(ctx, rv->name.c_str());
+                    exprr = opensmt_mk_num_from_string(ctx, rv->name.c_str());
                 }
                 else
                     exprr = table->getX(ID2);
             }
-            ast = dreal_mk_eq(ctx, exprl, exprr);
+            ast = opensmt_mk_eq(ctx, exprl, exprr);
             break;
         case NE:    
             lpv = con->lpvList;
@@ -715,22 +715,22 @@ dreal_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *ta
                     errs()<<"0.NE GetVal error "<<ID1<<"\t"<<cfg->variableList[ID1].name<<"\n";
                 if(!table->getVal(ID2,rval))
                     errs()<<"1.NE GetVal error "<<ID2<<"\t"<<cfg->variableList[ID2].name<<"\n";
-                exprl = dreal_mk_num(ctx, lval);
-                exprr = dreal_mk_num(ctx, rval);
+                exprl = opensmt_mk_num(ctx, lval);
+                exprr = opensmt_mk_num(ctx, rval);
             }
             else{
                 if(lv->type==NUM){
-                    exprl = dreal_mk_num_from_string(ctx, lv->name.c_str());
+                    exprl = opensmt_mk_num_from_string(ctx, lv->name.c_str());
                 }
                 else
                     exprl = table->getX(ID1);
                 if(rv->type==NUM){
-                    exprr = dreal_mk_num_from_string(ctx, rv->name.c_str());
+                    exprr = opensmt_mk_num_from_string(ctx, rv->name.c_str());
                 }
                 else
                     exprr = table->getX(ID2);
             }        
-            ast = dreal_mk_not(ctx, dreal_mk_eq(ctx, exprl, exprr));
+            ast = opensmt_mk_not(ctx, opensmt_mk_eq(ctx, exprl, exprr));
             break;
         case ASSIGN:{
             lpv = con->lpvList;
@@ -820,7 +820,7 @@ dreal_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *ta
                 if(!rpv.isExp){
                     rv = table->getAlias(rpv.rvar);
                     if(rv->type==NUM){
-                        exprr = dreal_mk_num_from_string(ctx, rv->name.c_str());
+                        exprr = opensmt_mk_num_from_string(ctx, rv->name.c_str());
                         double val = ConvertToDouble(rv->name);
                         table->setVal(lv->ID, val);
                     }
@@ -828,9 +828,9 @@ dreal_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *ta
                         exprr = table->getX(rv->ID);
                         double val;
                         if(lv->type==INT && rv->type==FP){
-                            dreal_expr ast_tleq = dreal_mk_leq(ctx, exprl, exprr);
-                            dreal_expr ast_tgt = dreal_mk_gt(ctx, exprl, dreal_mk_minus(ctx, exprr, dreal_mk_num(ctx, 1)));
-                            dreal_expr ast_and = dreal_mk_and_2(ctx, ast_tleq, ast_tgt);
+                            opensmt_expr ast_tleq = opensmt_mk_leq(ctx, exprl, exprr);
+                            opensmt_expr ast_tgt = opensmt_mk_gt(ctx, exprl, opensmt_mk_minus(ctx, exprr, opensmt_mk_num(ctx, 1)));
+                            opensmt_expr ast_and = opensmt_mk_and_2(ctx, ast_tleq, ast_tgt);
                             
                             if(table->getVal(rv->ID, val))
                                 table->setVal(lv->ID, (int)val);
@@ -851,8 +851,8 @@ dreal_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *ta
                     double rl=0;
                     double rr=0;
                     double val=0;
-                    dreal_expr y;
-                    dreal_expr z;
+                    opensmt_expr y;
+                    opensmt_expr z;
                     string name = lv->name;
                     bool treat = true;
                     switch(pvop){
@@ -872,7 +872,7 @@ dreal_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *ta
                             rvr = rpv.rvar;
                             y = getExpr(rvl, treat, rl, table);
                             z = getExpr(rvr, treat, rr, table);        
-                            exprr = dreal_mk_AND(ctx, y, z, name, 32);    
+                            exprr = opensmt_mk_AND(ctx, y, z, name, 32);    
                             if(treat)
                                 table->setVal(lv->ID, (int)rl&(int)rr);
                             break;
@@ -881,7 +881,7 @@ dreal_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *ta
                             rvr = rpv.rvar;
                             y = getExpr(rvl, treat, rl, table);
                             z = getExpr(rvr, treat, rr, table);
-                            exprr = dreal_mk_NAND(ctx, y, z, name, 32);
+                            exprr = opensmt_mk_NAND(ctx, y, z, name, 32);
                             if(treat)
                                 table->setVal(lv->ID, ~((int)rl&(int)rr));
                             break;
@@ -890,7 +890,7 @@ dreal_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *ta
                             rvr = rpv.rvar;
                             y = getExpr(rvl, treat, rl, table);
                             z = getExpr(rvr, treat, rr, table);
-                            exprr = dreal_mk_OR(ctx, y, z, name, 32);
+                            exprr = opensmt_mk_OR(ctx, y, z, name, 32);
                             if(treat)
                                 table->setVal(lv->ID, (int)rl|(int)rr);
                             break;
@@ -899,7 +899,7 @@ dreal_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *ta
                             rvr = rpv.rvar;
                             y = getExpr(rvl, treat, rl, table);
                             z = getExpr(rvr, treat, rr, table);
-                            exprr = dreal_mk_XOR(ctx, y, z, name, 32);
+                            exprr = opensmt_mk_XOR(ctx, y, z, name, 32);
                             if(treat)
                                 table->setVal(lv->ID, (int)rl^(int)rr);
                             break;
@@ -908,7 +908,7 @@ dreal_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *ta
                             rvr = rpv.rvar;
                             y = getExpr(rvl, treat, rl, table);
                             z = getExpr(rvr, treat, rr, table);
-                            exprr = dreal_mk_SREM(ctx, y, z, name);
+                            exprr = opensmt_mk_SREM(ctx, y, z, name);
                             if(treat)
                                 table->setVal(lv->ID, (int)rl%(int)rr);
                             break;
@@ -920,9 +920,9 @@ dreal_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *ta
                                 errs()<<"ASHR error: invalid z value\n";
                             y = getExpr(rvl, treat, rl, table);
                             if(rr<0)
-                                exprr = dreal_mk_SHL(ctx, y, -(int)rr, name, 32);
+                                exprr = opensmt_mk_SHL(ctx, y, -(int)rr, name, 32);
                             else
-                                exprr = dreal_mk_ASHR(ctx, y, (int)rr, name, 32);
+                                exprr = opensmt_mk_ASHR(ctx, y, (int)rr, name, 32);
                             if(treat)
                                 table->setVal(lv->ID, (int)rl>>(int)rr);
                             break;
@@ -934,9 +934,9 @@ dreal_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *ta
                                 errs()<<"SHL error: invalid z value\n";
                             y = getExpr(rvl, treat, rl, table);
                             if(rr>=0)
-                                exprr = dreal_mk_SHL(ctx, y, (int)rr, name, 32);
+                                exprr = opensmt_mk_SHL(ctx, y, (int)rr, name, 32);
                             else
-                                exprr = dreal_mk_ASHR(ctx, y, -(int)rr, name, 32);
+                                exprr = opensmt_mk_ASHR(ctx, y, -(int)rr, name, 32);
                             if(treat)
                                 table->setVal(lv->ID, (int)rl<<(int)rr);
                             break;
@@ -945,7 +945,7 @@ dreal_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *ta
                             rvr = rpv.rvar;
                             y = getExpr(rvl, treat, rl, table);
                             z = getExpr(rvr, treat, rr, table);
-                            exprr = dreal_mk_plus_2(ctx, y, z);
+                            exprr = opensmt_mk_plus_2(ctx, y, z);
                             if(treat)
                                 table->setVal(lv->ID, rl+rr);
                             break;
@@ -954,21 +954,21 @@ dreal_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *ta
                             rvr = rpv.rvar;
                             y = getExpr(rvl, treat, rl, table);
                             z = getExpr(rvr, treat, rr, table);
-                            exprr = dreal_mk_minus(ctx, y, z);
+                            exprr = opensmt_mk_minus(ctx, y, z);
                             if(treat)
                                 table->setVal(lv->ID, rl-rr);
                             break;
                         case TAN:
                             rvr = rpv.rvar;
                             z = getExpr(rvr, treat, rr, table);
-                            exprr = dreal_mk_tan(ctx, z);
+                            exprr = opensmt_mk_tan(ctx, z);
                             if(treat)
                                 table->setVal(lv->ID, tan(rr));
                             break;
                         case ATAN:
                             rvr = rpv.rvar;
                             z = getExpr(rvr, treat, rr, table);
-                            exprr = dreal_mk_atan(ctx, z);
+                            exprr = opensmt_mk_atan(ctx, z);
                             if(treat)
                                 table->setVal(lv->ID, atan(rr));
                             break;
@@ -977,42 +977,42 @@ dreal_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *ta
                             rvr = rpv.rvar;
                             y = getExpr(rvl, treat, rl, table);
                             z = getExpr(rvr, treat, rr, table);
-                            exprr = dreal_mk_atan2(ctx, y, z);
+                            exprr = opensmt_mk_atan2(ctx, y, z);
                             if(treat)
                                 table->setVal(lv->ID, atan2(rl, rr));
                             break;
                         case SIN:
                             rvr = rpv.rvar;
                             z = getExpr(rvr, treat, rr, table);
-                            exprr = dreal_mk_sin(ctx, z);
+                            exprr = opensmt_mk_sin(ctx, z);
                             if(treat)
                                 table->setVal(lv->ID, sin(rr));
                             break;
                         case ASIN:
                             rvr = rpv.rvar;
                             z = getExpr(rvr, treat, rr, table);
-                            exprr = dreal_mk_asin(ctx, z);
+                            exprr = opensmt_mk_asin(ctx, z);
                             if(treat)
                                 table->setVal(lv->ID, asin(rr));
                             break;
                         case COS:
                             rvr = rpv.rvar;
                             z = getExpr(rvr, treat, rr, table);
-                            exprr = dreal_mk_cos(ctx, z);
+                            exprr = opensmt_mk_cos(ctx, z);
                             if(treat)
                                 table->setVal(lv->ID, cos(rr));
                             break;
                         case ACOS:
                             rvr = rpv.rvar;
                             z = getExpr(rvr, treat, rr, table);
-                            exprr = dreal_mk_acos(ctx, z);
+                            exprr = opensmt_mk_acos(ctx, z);
                             if(treat)
                                 table->setVal(lv->ID, acos(rr));
                             break;
                         case SQRT:
                             rvr = rpv.rvar;
                             z = getExpr(rvr, treat, rr, table);
-                            exprr = dreal_mk_pow(ctx, z, dreal_mk_num(ctx, 0.5));
+                            exprr = opensmt_mk_pow(ctx, z, opensmt_mk_num(ctx, 0.5));
                             if(treat)
                                 table->setVal(lv->ID, sqrt(rr));
                             break;
@@ -1021,56 +1021,56 @@ dreal_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *ta
                             rvr = rpv.rvar;
                             y = getExpr(rvl, treat, rl, table);
                             z = getExpr(rvr, treat, rr, table);
-                            exprr = dreal_mk_pow(ctx, y, z);
+                            exprr = opensmt_mk_pow(ctx, y, z);
                             if(treat)
                                 table->setVal(lv->ID, powf(rl,rr));
                             break;
                         case LOG:
                             rvr = rpv.rvar;
                             z = getExpr(rvr, treat, rr, table);
-                            exprr = dreal_mk_log(ctx, z);
+                            exprr = opensmt_mk_log(ctx, z);
                             if(treat)
                                 table->setVal(lv->ID, log(rr));
                             break;
                         case LOG10:
                             rvr = rpv.rvar;
                             z = getExpr(rvr, treat, rr, table);
-                            exprr = dreal_mk_div(ctx, dreal_mk_log(ctx, z),dreal_mk_log(ctx, dreal_mk_num(ctx, 10)));
+                            exprr = opensmt_mk_div(ctx, opensmt_mk_log(ctx, z),opensmt_mk_log(ctx, opensmt_mk_num(ctx, 10)));
                             if(treat)
                                 table->setVal(lv->ID, log10(rr));
                             break;
                         case ABS:
                             rvr = rpv.rvar;
                             z = getExpr(rvr, treat, rr, table);
-                            exprr = dreal_mk_abs(ctx, z);
+                            exprr = opensmt_mk_abs(ctx, z);
                             if(treat)
                                 table->setVal(lv->ID, fabs(rr));
                             break;
                         case EXP:
                             rvr = rpv.rvar;
                             z = getExpr(rvr, treat, rr, table);
-                            exprr = dreal_mk_exp(ctx, z);
+                            exprr = opensmt_mk_exp(ctx, z);
                             if(treat)
                                 table->setVal(lv->ID, exp(rr));
                             break;
                         case SINH:
                             rvr = rpv.rvar;
                             z = getExpr(rvr, treat, rr, table);
-                            exprr = dreal_mk_sinh(ctx, z);
+                            exprr = opensmt_mk_sinh(ctx, z);
                             if(treat)
                                 table->setVal(lv->ID, sinh(rr));
                             break;
                         case COSH:
                             rvr = rpv.rvar;
                             z = getExpr(rvr, treat, rr, table);
-                            exprr = dreal_mk_cosh(ctx, z);
+                            exprr = opensmt_mk_cosh(ctx, z);
                             if(treat)
                                 table->setVal(lv->ID, cosh(rr));
                             break;
                         case TANH:
                             rvr = rpv.rvar;
                             z = getExpr(rvr, treat, rr, table);
-                            exprr = dreal_mk_tanh(ctx, z);
+                            exprr = opensmt_mk_tanh(ctx, z);
                             if(treat)
                                 table->setVal(lv->ID, tanh(rr));
                             break;
@@ -1079,7 +1079,7 @@ dreal_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *ta
                             rvr = rpv.rvar;
                             y = getExpr(rvl, treat, rl, table);
                             z = getExpr(rvr, treat, rr, table);
-                            exprr = dreal_mk_times_2(ctx, y, z);
+                            exprr = opensmt_mk_times_2(ctx, y, z);
                             if(treat)
                                 table->setVal(lv->ID, rl*rr);
                             break;
@@ -1088,7 +1088,7 @@ dreal_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *ta
                             rvr = rpv.rvar;
                             y = getExpr(rvl, treat, rl, table);
                             z = getExpr(rvr, treat, rr, table);
-                            exprr = dreal_mk_div(ctx, y, z);
+                            exprr = opensmt_mk_div(ctx, y, z);
                             if(treat&&rr!=0)
                                 table->setVal(lv->ID, rl/rr);
                             break;
@@ -1097,9 +1097,10 @@ dreal_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *ta
                             rvr = rpv.rvar;
                             y = getExpr(rvl, treat, rl, table);
                             z = getExpr(rvr, treat, rr, table);
-                            exprr = dreal_mk_INT_cmp(ctx, y, z, pvop, name);
+                            ast = opensmt_mk_INT_cmp(ctx, exprl, y, z, pvop, name);
                             if(treat)
                                 table->setVal(lv->ID, getCMP(rl, rr ,pvop));
+                            return ast;
                             break;
                         default:
                             errs()<<"get_constraint error: DATA rpv.op error "<<*con<<"\n";
@@ -1108,7 +1109,7 @@ dreal_expr UnlinearVerify::tran_constraint(Constraint *con, UnlinearVarTable *ta
             }
             else
                 errs()<<"get_constraint error: lv->type error\n";
-            ast = dreal_mk_eq(ctx, exprl, exprr);
+            ast = opensmt_mk_eq(ctx, exprl, exprr);
             break;
         }
     }
@@ -1123,15 +1124,15 @@ void UnlinearVerify::get_constraint(vector<Constraint> consList, UnlinearVarTabl
     unsigned size = consList.size();
     
     bool isOR = (isTransition && size>1);
-    dreal_expr *cons=NULL;
+    opensmt_expr *cons=NULL;
     if(isOR)
-        cons = new dreal_expr[size];
+        cons = new opensmt_expr[size];
     */
 
     for(unsigned m=0;m<consList.size();m++)
     {
         Constraint* con = &consList[m];
-        dreal_expr ast = tran_constraint(con, table, time );
+        opensmt_expr ast = tran_constraint(con, table, time );
 
         if(ast!=NULL){
 /*
@@ -1139,23 +1140,23 @@ void UnlinearVerify::get_constraint(vector<Constraint> consList, UnlinearVarTabl
                 cons[m] = ast;
             }
             else{
-                dreal_print_expr(ast);
-                dreal_assert(ctx, ast);
+                opensmt_print_expr(ast);
+                opensmt_assert(ctx, ast);
                 cerr<< endl;
             }
 */
-            dreal_assert(ctx, ast);
+            opensmt_assert(ctx, ast);
             if(outMode==1){
-                dreal_print_expr(ast);
+                opensmt_print_expr(ast);
                 cerr<< endl;
             }
         }
     }
 /*
     if(isOR){
-        dreal_expr exprs = dreal_mk_or(ctx, cons, size);
-        dreal_print_expr(exprs);
-        dreal_assert(ctx, exprs);
+        opensmt_expr exprs = opensmt_mk_or(ctx, cons, size);
+        opensmt_print_expr(exprs);
+        opensmt_assert(ctx, exprs);
         cerr<< endl;
     }
 */
@@ -1197,7 +1198,7 @@ void UnlinearVerify::encode_path(CFG* ha, vector<int> patharray)
 }
 
 bool UnlinearVerify::analyze_unsat_core(int state){
-    dreal_result res = dreal_check( ctx );
+    opensmt_result res = opensmt_check( ctx );
 
     if(res == l_true){
         return true;

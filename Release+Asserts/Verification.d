@@ -84,8 +84,8 @@
  /home/lich/Documents/llvm/include/llvm/IR/DebugInfo.h \
  /home/lich/Documents/llvm/include/llvm/Support/Dwarf.h \
  /home/lich/Documents/llvm/include/llvm/IR/TypeBuilder.h general.h \
- MinisatDebug.h dreal.h LinearVerify.h MUSSAnalyzer.h DebugInfo.h \
- UnlinearVerify.h
+ MinisatDebug.h LinearVerify.h MUSSAnalyzer.h DebugInfo.h \
+ UnlinearVerify.h opensmt_c.h
 
 Verification.h:
 
@@ -263,8 +263,6 @@ general.h:
 
 MinisatDebug.h:
 
-dreal.h:
-
 LinearVerify.h:
 
 MUSSAnalyzer.h:
@@ -272,3 +270,5 @@ MUSSAnalyzer.h:
 DebugInfo.h:
 
 UnlinearVerify.h:
+
+opensmt_c.h:
