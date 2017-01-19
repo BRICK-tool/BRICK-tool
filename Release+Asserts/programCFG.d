@@ -90,7 +90,7 @@
  /home/lich/Documents/llvm/include/llvm/ADT/DenseSet.h \
  /home/lich/Documents/llvm/include/llvm/Support/FormattedStream.h \
  DebugInfo.h general.h Verification.h MinisatDebug.h dreal.h \
- LinearVerify.h MUSSAnalyzer.h UnlinearVerify.h System.h mylib/printSTL.h \
+ LinearVerify.h MUSSAnalyzer.h UnlinearVerify.h System.h \
  /home/lich/Documents/llvm/include/llvm/Support/FileSystem.h \
  /home/lich/Documents/llvm/include/llvm/ADT/IntrusiveRefCntPtr.h \
  /home/lich/Documents/llvm/include/llvm/ADT/SmallString.h \
@@ -301,8 +301,6 @@ MUSSAnalyzer.h:
 UnlinearVerify.h:
 
 System.h:
-
-mylib/printSTL.h:
 
 /home/lich/Documents/llvm/include/llvm/Support/FileSystem.h:
 
