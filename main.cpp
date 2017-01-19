@@ -107,7 +107,7 @@ int main(int argc, char* argv[]){
 }
 
 void printUsage(){
-    cout << "Usage: verify filename -f <func> -b <bound> -p <precision> [-options]" << endl;
+    cout << "Usage: ./BRICK <filename> -f <func> -b <bound> -p <precision> [-options]" << endl;
     cout << "[-options]:" << endl;
     cout<<"\t-l <line> (-s <expr>)\tspecify lineNo (and expression) to check on"<<endl;
     cout<<"\t-o\t\tBRICK display CFG and constraints while checking"<<endl;
@@ -155,7 +155,7 @@ void opt(string name, int b, double p, int m, char* f, char* e, int o){
     if(e != NULL)
         expr += "-expression=\"" + string(e)+"\"";
     string command = "opt -load buildCFG.so -load libcapd.so -load libibex.so"
-    " -load libdreal.so -load libz3.so -load libminisat.so"
+    " -load /usr/local/lib/libdreal.so -load libz3.so -load libminisat.so"
     " -buildCFG "+bound+" "+precision+" "+mode+" "+func+" "+output+" "+expr+"<"+name+".bc>"+name+"buildCFG.bc";
 	
     if(o==1)    
